@@ -26,43 +26,42 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 // Utility class to read images from internal storage
-class FileReader( private var faceNetModel: FaceNetModel ) {
+class FileReader(private var faceNetModel: FaceNetModel) {
 
     private val realTimeOpts = FaceDetectorOptions.Builder()
-        .setPerformanceMode( FaceDetectorOptions.PERFORMANCE_MODE_FAST )
+        .setPerformanceMode(FaceDetectorOptions.PERFORMANCE_MODE_FAST)
         .build()
-    private val detector = FaceDetection.getClient( realTimeOpts )
-    private val defaultScope = CoroutineScope( Dispatchers.Default )
-    private val mainScope = CoroutineScope( Dispatchers.Main )
+    private val detector = FaceDetection.getClient(realTimeOpts)
+    private val defaultScope = CoroutineScope(Dispatchers.Default)
+    private val mainScope = CoroutineScope(Dispatchers.Main)
     private var numImagesWithNoFaces = 0
     private var imageCounter = 0
     private var numImages = 0
-    private var data = ArrayList<Pair<String,Bitmap>>()
+    private var data = ArrayList<Pair<String, Bitmap>>()
     private lateinit var callback: ProcessCallback
 
     // imageData will be provided to the MainActivity via ProcessCallback ( see the run() method below ) and finally,
     // used by the FrameAnalyser class.
-    private val imageData = ArrayList<Pair<String,FloatArray>>()
-
+    private val imageData = ArrayList<Pair<String, FloatArray>>()
 
 
     // Given the Bitmaps, extract face embeddings from then and deliver the processed embedding to ProcessCallback.
-    fun run( data : ArrayList<Pair<String,Bitmap>> , callback: ProcessCallback ) {
+    fun run(data: ArrayList<Pair<String, Bitmap>>, callback: ProcessCallback) {
         numImages = data.size
         this.data = data
         this.callback = callback
-        scanImage( data[ imageCounter ].first , data[ imageCounter ].second )
+        scanImage(data[imageCounter].first, data[imageCounter].second)
     }
 
 
     interface ProcessCallback {
-        fun onProcessCompleted( data : ArrayList<Pair<String,FloatArray>> , numImagesWithNoFaces : Int )
+        fun onProcessCompleted(data: ArrayList<Pair<String, FloatArray>>, numImagesWithNoFaces: Int)
     }
 
 
     // Crop faces and produce embeddings ( using FaceNet ) from given image.
     // Store the embedding in imageData
-    private fun scanImage( name : String , image : Bitmap ) {
+    private fun scanImage(name: String, image: Bitmap) {
         mainScope.launch {
             val inputImage = InputImage.fromByteArray(
                 BitmapUtils.bitmapToNV21ByteArray(image),
@@ -87,8 +86,7 @@ class FileReader( private var faceNetModel: FaceNetModel ) {
                                 reset()
                             }
                         }
-                    }
-                    else {
+                    } else {
                         // The image contains no faces, proceed to the next one.
                         numImagesWithNoFaces += 1
                         if (imageCounter + 1 != numImages) {
@@ -104,14 +102,15 @@ class FileReader( private var faceNetModel: FaceNetModel ) {
     }
 
     // Suspend function for running the FaceNet model
-    private suspend fun getEmbedding(image: Bitmap, bbox : Rect ) : FloatArray = withContext( Dispatchers.Default ) {
-        return@withContext faceNetModel.getFaceEmbedding(
-            BitmapUtils.cropRectFromBitmap(
-                image,
-                bbox
+    private suspend fun getEmbedding(image: Bitmap, bbox: Rect): FloatArray =
+        withContext(Dispatchers.Default) {
+            return@withContext faceNetModel.getFaceEmbedding(
+                BitmapUtils.cropRectFromBitmap(
+                    image,
+                    bbox
+                )
             )
-        )
-    }
+        }
 
 
     private fun reset() {

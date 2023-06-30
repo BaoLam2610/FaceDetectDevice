@@ -15,7 +15,7 @@ import java.nio.ByteBuffer
 
 // Mask Detection model
 // Source -> https://github.com/achen353/Face-Mask-Detector
-class MaskDetectionModel( context: Context ) {
+class MaskDetectionModel(context: Context) {
 
     val MASK = "mask"
     val NO_MASK = "no mask"
@@ -23,15 +23,15 @@ class MaskDetectionModel( context: Context ) {
     private val imgSize = 224
     private val numClasses = 2
     private val classIndexToLabel = mapOf(
-        0 to MASK ,
-        1 to NO_MASK ,
+        0 to MASK,
+        1 to NO_MASK,
     )
     private val modelName = "mask_detector.tflite"
 
-    private var interpreter : Interpreter
+    private var interpreter: Interpreter
     private val imageTensorProcessor = ImageProcessor.Builder()
-        .add( ResizeOp( imgSize , imgSize , ResizeOp.ResizeMethod.BILINEAR ) )
-        .add( NormalizeOp( 127.5f ,127.5f ) )
+        .add(ResizeOp(imgSize, imgSize, ResizeOp.ResizeMethod.BILINEAR))
+        .add(NormalizeOp(127.5f, 127.5f))
         .build()
 
     init {
@@ -39,28 +39,27 @@ class MaskDetectionModel( context: Context ) {
         val interpreterOptions = Interpreter.Options().apply {
             // Add the GPU Delegate if supported.
             // See -> https://www.tensorflow.org/lite/performance/gpu#android
-            if ( CompatibilityList().isDelegateSupportedOnThisDevice ) {
-                addDelegate( GpuDelegate( CompatibilityList().bestOptionsForThisDevice ) )
-            }
-            else {
+            if (CompatibilityList().isDelegateSupportedOnThisDevice) {
+                addDelegate(GpuDelegate(CompatibilityList().bestOptionsForThisDevice))
+            } else {
                 // Number of threads for computation
                 numThreads = 4
             }
             setUseXNNPACK(true)
         }
-        interpreter = Interpreter(FileUtil.loadMappedFile( context, modelName ) , interpreterOptions )
+        interpreter = Interpreter(FileUtil.loadMappedFile(context, modelName), interpreterOptions)
     }
 
 
     // Predict the emotion given the cropped Bitmap
-    fun detectMask( image : Bitmap ) : String {
-        return classIndexToLabel[ runModel( processTensorImage( image )).argmax() ]!!
+    fun detectMask(image: Bitmap): String {
+        return classIndexToLabel[runModel(processTensorImage(image)).argmax()]!!
     }
 
 
     // Kotlin Extension function for arg max.
     // See https://kotlinlang.org/docs/extensions.html
-    private fun FloatArray.argmax() : Int {
+    private fun FloatArray.argmax(): Int {
         return this.indexOfFirst { it == this.maxOrNull()!! }
     }
 
@@ -68,16 +67,19 @@ class MaskDetectionModel( context: Context ) {
     // Run the mask detection model.
     private fun runModel(inputs: Any): FloatArray {
         val t1 = System.currentTimeMillis()
-        val modelOutputs = Array( 1 ){ FloatArray( numClasses ) }
-        interpreter.run( inputs, modelOutputs )
-        Log.i( "Performance" , "Mask detection model inference speed in ms : ${System.currentTimeMillis() - t1}")
-        return modelOutputs[ 0 ]
+        val modelOutputs = Array(1) { FloatArray(numClasses) }
+        interpreter.run(inputs, modelOutputs)
+        Log.i(
+            "Performance",
+            "Mask detection model inference speed in ms : ${System.currentTimeMillis() - t1}"
+        )
+        return modelOutputs[0]
     }
 
 
     // Process the given bitmap and convert it to a ByteBuffer
-    private fun processTensorImage( image  : Bitmap ) : ByteBuffer {
-        return imageTensorProcessor.process( TensorImage.fromBitmap( image ) ).buffer
+    private fun processTensorImage(image: Bitmap): ByteBuffer {
+        return imageTensorProcessor.process(TensorImage.fromBitmap(image)).buffer
     }
 
 
