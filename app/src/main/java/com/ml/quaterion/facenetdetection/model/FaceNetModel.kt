@@ -72,7 +72,6 @@ class FaceNetModel(
         }
         interpreter =
             Interpreter(FileUtil.loadMappedFile(context, model.assetsFilename), interpreterOptions)
-        Logger.log("Using ${model.name} model.")
     }
 
 

@@ -47,13 +47,9 @@ class BoundingBoxOverlay(context: Context, attributeSet: AttributeSet) :
 
     // Paint for boxes and text
     private val boxPaint = Paint().apply {
-        color = Color.parseColor("#4D90caf9")
-        style = Paint.Style.FILL
-    }
-    private val textPaint = Paint().apply {
-        strokeWidth = 2.0f
-        textSize = 32f
         color = Color.WHITE
+        style = Paint.Style.STROKE
+        strokeWidth = 5.0f
     }
 
 
@@ -90,20 +86,6 @@ class BoundingBoxOverlay(context: Context, attributeSet: AttributeSet) :
                     val boundingBox = face.bbox.toRectF()
                     output2OverlayTransform.mapRect(boundingBox)
                     canvas?.drawRoundRect(boundingBox, 16f, 16f, boxPaint)
-                    canvas?.drawText(
-                        face.label,
-                        boundingBox.centerX(),
-                        boundingBox.centerY(),
-                        textPaint
-                    )
-                    if (drawMaskLabel) {
-                        canvas?.drawText(
-                            face.maskLabel,
-                            boundingBox.centerX(),
-                            boundingBox.centerY() + 32,
-                            textPaint
-                        )
-                    }
                 }
             }
         }
